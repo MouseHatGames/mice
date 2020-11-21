@@ -2,18 +2,26 @@ package mice
 
 import (
 	"errors"
+	"fmt"
+	"net"
 
 	"github.com/MouseHatGames/mice/options"
+	"google.golang.org/grpc"
 )
 
 // Service represents a service that can receive and send requests
 type Service interface {
+	// Apply applies one or more options to the service's configuration
 	Apply(opts ...options.Option)
+
+	Server() Server
+
 	Start() error
 }
 
 type service struct {
 	options options.Options
+	server  Server
 }
 
 // NewService instantiates a new service and initializes it with options
@@ -34,6 +42,24 @@ func (s *service) Start() error {
 	if s.options.Name == "" {
 		return errors.New("missing service name")
 	}
+	if s.options.ListenAddr == "" {
+		return errors.New("missing listen address")
+	}
+
+	lis, err := net.Listen("tcp", s.options.ListenAddr)
+	if err != nil {
+		return fmt.Errorf("failed to open tcp listener: %w", err)
+	}
+
+	srv := grpc.NewServer()
+
+	if err := srv.Serve(lis); err != nil {
+		return fmt.Errorf("failed to serve grpc: %w", err)
+	}
 
 	return nil
+}
+
+func (s *service) Server() Server {
+	return &server{}
 }
