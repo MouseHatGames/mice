@@ -1,3 +1,3 @@
-module github.com/MouseHatGames/micrologic
+module github.com/MouseHatGames/mice
 
 go 1.15
