@@ -1,6 +1,6 @@
 package transport
 
 type Message struct {
-	Target string
-	Data   []byte
+	Headers map[string]string
+	Data    []byte
 }

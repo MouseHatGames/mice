@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/MouseHatGames/mice/options"
+	"github.com/MouseHatGames/mice/server"
 	"google.golang.org/grpc"
 )
 
@@ -14,14 +15,14 @@ type Service interface {
 	// Apply applies one or more options to the service's configuration
 	Apply(opts ...options.Option)
 
-	Server() Server
+	Server() server.Server
 
 	Start() error
 }
 
 type service struct {
 	options options.Options
-	server  Server
+	server  server.Server
 }
 
 // NewService instantiates a new service and initializes it with options
@@ -60,6 +61,6 @@ func (s *service) Start() error {
 	return nil
 }
 
-func (s *service) Server() Server {
-	return &server{}
+func (s *service) Server() server.Server {
+	return nil
 }
