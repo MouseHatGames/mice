@@ -30,7 +30,7 @@ func newHandler(h interface{}) *handler {
 	handval := reflect.ValueOf(h)
 	name := reflect.Indirect(handval).Type().Name()
 
-	var endpoints map[string]*endpoint
+	endpoints := make(map[string]*endpoint)
 
 	for i := 0; i < handtype.NumMethod(); i++ {
 		m := handtype.Method(i)

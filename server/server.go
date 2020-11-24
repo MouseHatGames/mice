@@ -3,23 +3,28 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 
+	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
-	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/transport"
 )
 
 type Server interface {
 	Start() error
+	AddHandler(h interface{})
 }
 
 type server struct {
 	opts *options.Options
+	log  logger.Logger
 }
 
 func NewServer(opts *options.Options) Server {
 	return &server{
 		opts: opts,
+		log:  opts.Logger.GetLogger("server"),
 	}
 }
 
@@ -29,21 +34,31 @@ func (s *server) Start() error {
 		return err
 	}
 
-	go l.Accept(s.handle)
+	if err := l.Accept(s.handle); err != nil {
+		return fmt.Errorf("accept connections: %w", err)
+	}
 
 	return nil
 }
 
-func (s *server) handle(soc transport.Socket) {
-	defer soc.Close()
+func (s *server) AddHandler(h interface{}) {
+	s.opts.Router.AddHandler(h)
+}
 
+func (s *server) handle(soc transport.Socket) {
 	go func() {
+		defer soc.Close()
+
 		var req transport.Message
 
 		for {
 			err := soc.Receive(&req)
 			if err != nil {
-				s.opts.Logger.Errorf("receive message: %s", err)
+				if !errors.Is(err, io.EOF) {
+					s.log.Errorf("receive message: %s", err)
+				} else {
+					s.log.Debugf("socket eof")
+				}
 				break
 			}
 
@@ -56,31 +71,24 @@ func (s *server) handle(soc transport.Socket) {
 func (s *server) handleRequest(req *transport.Message, soc transport.Socket) {
 	path, ok := req.Headers[transport.HeaderPath]
 	if !ok {
-		s.opts.Logger.Errorf("missing path header")
+		s.log.Errorf("missing path header")
 		return
 	}
-
-	ret, err := s.opts.Router.Handle(path, req.Data)
 
 	var resp transport.Message
 	resp.Headers = map[string]string{
 		transport.HeaderRequestID: req.Headers[transport.HeaderRequestID],
 	}
 
-	var hdlrerr router.HandlerError
+	ret, err := s.opts.Router.Handle(path, req.Data)
 
-	if errors.As(err, &hdlrerr) {
+	if err != nil {
 		resp.SetError(err)
 	} else {
-		d, err := s.opts.Codec.Marshal(ret)
-		if err != nil {
-			resp.SetError(err)
-		} else {
-			resp.Data = d
-		}
+		resp.Data = ret
 	}
 
 	if err := soc.Send(context.Background(), &resp); err != nil {
-		s.opts.Logger.Errorf("send response: %s", err)
+		s.log.Errorf("send response: %s", err)
 	}
 }

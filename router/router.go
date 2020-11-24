@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/MouseHatGames/mice/codec"
+	"github.com/MouseHatGames/mice/logger"
 )
 
 var ErrMalformedPath = errors.New("malformed request path")
@@ -21,21 +22,29 @@ type Router interface {
 type router struct {
 	handlers map[string]*handler
 	codec    codec.Codec
+	log      logger.Logger
 }
 
-func NewRouter(cod codec.Codec) Router {
+func NewRouter(cod codec.Codec, log logger.Logger) Router {
 	return &router{
 		handlers: make(map[string]*handler),
 		codec:    cod,
+		log:      log.GetLogger("router"),
 	}
 }
 
 func (s *router) AddHandler(h interface{}) {
 	hdl := newHandler(h)
 	s.handlers[hdl.Name] = hdl
+
+	for k := range hdl.Endpoints {
+		s.log.Debugf("registered endpoint %s.%s", hdl.Name, k)
+	}
 }
 
 func (s *router) Handle(path string, data []byte) ([]byte, error) {
+	s.log.Debugf("request to %s", path)
+
 	dotidx := strings.IndexRune(path, '.')
 	if dotidx == -1 {
 		return nil, ErrMalformedPath
@@ -73,7 +82,12 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 		}
 	}
 
-	outdata, err := s.codec.Marshal(ret[1].Interface())
+	retval := ret[0]
+	if len(ret) == 2 {
+		retval = ret[1]
+	}
+
+	outdata, err := s.codec.Marshal(retval.Interface())
 	if err != nil {
 		return nil, fmt.Errorf("encode response: %w", err)
 	}

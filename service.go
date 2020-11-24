@@ -2,14 +2,12 @@ package mice
 
 import (
 	"errors"
-	"fmt"
-	"net"
 
+	"github.com/MouseHatGames/mice/client"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/server"
-	"google.golang.org/grpc"
 )
 
 // Service represents a service that can receive and send requests
@@ -18,6 +16,7 @@ type Service interface {
 	Apply(opts ...options.Option)
 
 	Server() server.Server
+	Client() client.Client
 
 	Start() error
 }
@@ -25,6 +24,7 @@ type Service interface {
 type service struct {
 	options options.Options
 	server  server.Server
+	client  client.Client
 }
 
 // NewService instantiates a new service and initializes it with options
@@ -34,7 +34,9 @@ func NewService(opts ...options.Option) Service {
 
 	svc.Apply(opts...)
 
-	svc.options.Router = router.NewRouter(svc.options.Codec)
+	svc.options.Router = router.NewRouter(svc.options.Codec, svc.options.Logger)
+	svc.server = server.NewServer(&svc.options)
+	svc.client = client.NewClient(&svc.options)
 
 	return svc
 }
@@ -53,20 +55,13 @@ func (s *service) Start() error {
 		return errors.New("missing listen address")
 	}
 
-	lis, err := net.Listen("tcp", s.options.ListenAddr)
-	if err != nil {
-		return fmt.Errorf("failed to open tcp listener: %w", err)
-	}
-
-	srv := grpc.NewServer()
-
-	if err := srv.Serve(lis); err != nil {
-		return fmt.Errorf("failed to serve grpc: %w", err)
-	}
-
-	return nil
+	return s.server.Start()
 }
 
 func (s *service) Server() server.Server {
-	return nil
+	return s.server
+}
+
+func (s *service) Client() client.Client {
+	return s.client
 }

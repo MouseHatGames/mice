@@ -43,10 +43,12 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}
+	defer s.Close()
 
 	reqid := "TODO: Generate ID"
 	req := transport.NewMessage()
 	req.Headers[transport.HeaderRequestID] = reqid
+	req.Headers[transport.HeaderPath] = path
 
 	req.Data, err = c.opts.Codec.Marshal(reqval)
 	if err != nil {
@@ -66,6 +68,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 		return &CallError{err}
 	}
 
+	fmt.Println(string(respmsg.Data))
 	if err := c.opts.Codec.Unmarshal(respmsg.Data, respval); err != nil {
 		return fmt.Errorf("decode response: %w", err)
 	}
