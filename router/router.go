@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/MouseHatGames/mice/options"
+	"github.com/MouseHatGames/mice/codec"
 )
 
 var ErrMalformedPath = errors.New("malformed request path")
@@ -20,13 +20,13 @@ type Router interface {
 
 type router struct {
 	handlers map[string]*handler
-	opts     *options.Options
+	codec    codec.Codec
 }
 
-func newRouter(opts *options.Options) Router {
+func newRouter(cod codec.Codec) Router {
 	return &router{
 		handlers: make(map[string]*handler),
-		opts:     opts,
+		codec:    cod,
 	}
 }
 
@@ -66,11 +66,14 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 	})
 
 	if len(ret) == 2 && !ret[1].IsNil() {
-		err := ret[1].Interface().(error)
-		return nil, fmt.Errorf("handler: %w", err)
+		return nil, &HandlerError{
+			endpoint: method,
+			handler:  handler,
+			err:      ret[1].Interface().(error),
+		}
 	}
 
-	outdata, err := s.opts.Codec.Marshal(ret[1].Interface())
+	outdata, err := s.codec.Marshal(ret[1].Interface())
 	if err != nil {
 		return nil, fmt.Errorf("encode response: %w", err)
 	}
@@ -86,7 +89,7 @@ func (s *router) decode(t reflect.Type, d []byte) (*reflect.Value, error) {
 	val := reflect.New(t)
 	intf := val.Interface()
 
-	if err := s.opts.Codec.Unmarshal(d, intf); err != nil {
+	if err := s.codec.Unmarshal(d, intf); err != nil {
 		return nil, err
 	}
 
