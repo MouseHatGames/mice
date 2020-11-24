@@ -1,4 +1,4 @@
-package server
+package router
 
 import (
 	"context"
@@ -13,29 +13,29 @@ import (
 var ErrMalformedPath = errors.New("malformed request path")
 var ErrEndpointNotFound = errors.New("endpoint not found")
 
-type Server interface {
+type Router interface {
 	AddHandler(h interface{})
 	Handle(path string, data []byte) ([]byte, error)
 }
 
-type server struct {
+type router struct {
 	handlers map[string]*handler
 	opts     *options.Options
 }
 
-func newServer(opts *options.Options) Server {
-	return &server{
+func newRouter(opts *options.Options) Router {
+	return &router{
 		handlers: make(map[string]*handler),
 		opts:     opts,
 	}
 }
 
-func (s *server) AddHandler(h interface{}) {
+func (s *router) AddHandler(h interface{}) {
 	hdl := newHandler(h)
 	s.handlers[hdl.Name] = hdl
 }
 
-func (s *server) Handle(path string, data []byte) ([]byte, error) {
+func (s *router) Handle(path string, data []byte) ([]byte, error) {
 	dotidx := strings.IndexRune(path, '.')
 	if dotidx == -1 {
 		return nil, ErrMalformedPath
@@ -78,7 +78,7 @@ func (s *server) Handle(path string, data []byte) ([]byte, error) {
 	return outdata, nil
 }
 
-func (s *server) decode(t reflect.Type, d []byte) (*reflect.Value, error) {
+func (s *router) decode(t reflect.Type, d []byte) (*reflect.Value, error) {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}

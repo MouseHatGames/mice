@@ -1,4 +1,4 @@
-package server
+package router
 
 import (
 	"reflect"
@@ -22,7 +22,7 @@ func (c *mockCodec) Unmarshal(b []byte, out interface{}) error {
 
 func TestDecode(t *testing.T) {
 	c := &mockCodec{}
-	s := &server{
+	s := &router{
 		opts: &options.Options{
 			Codec: c,
 		},
