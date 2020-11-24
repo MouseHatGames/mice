@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 
 	"github.com/MouseHatGames/mice/options"
@@ -16,7 +17,7 @@ type server struct {
 	opts *options.Options
 }
 
-func newServer(opts *options.Options) Server {
+func NewServer(opts *options.Options) Server {
 	return &server{
 		opts: opts,
 	}
@@ -79,7 +80,7 @@ func (s *server) handleRequest(req *transport.Message, soc transport.Socket) {
 		}
 	}
 
-	if err := soc.Send(&resp); err != nil {
+	if err := soc.Send(context.Background(), &resp); err != nil {
 		s.opts.Logger.Errorf("send response: %s", err)
 	}
 }

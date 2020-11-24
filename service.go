@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
+	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/server"
 	"google.golang.org/grpc"
 )
@@ -28,7 +30,11 @@ type service struct {
 // NewService instantiates a new service and initializes it with options
 func NewService(opts ...options.Option) Service {
 	svc := &service{}
+	svc.options.Logger = logger.NewStdoutLogger()
+
 	svc.Apply(opts...)
+
+	svc.options.Router = router.NewRouter(svc.options.Codec)
 
 	return svc
 }

@@ -54,10 +54,3 @@ func Transport(t transport.Transport) Option {
 		o.Transport = t
 	}
 }
-
-// Router sets the router
-func Router(r router.Router) Option {
-	return func(o *Options) {
-		o.Router = r
-	}
-}

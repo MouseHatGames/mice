@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"errors"
 	"net"
 )
@@ -15,7 +16,7 @@ type Transport interface {
 
 type Socket interface {
 	Close() error
-	Send(msg *Message) error
+	Send(ctx context.Context, msg *Message) error
 	Receive(msg *Message) error
 }
 

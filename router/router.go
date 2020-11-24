@@ -23,7 +23,7 @@ type router struct {
 	codec    codec.Codec
 }
 
-func newRouter(cod codec.Codec) Router {
+func NewRouter(cod codec.Codec) Router {
 	return &router{
 		handlers: make(map[string]*handler),
 		codec:    cod,
