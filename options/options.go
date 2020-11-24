@@ -1,9 +1,12 @@
 package options
 
+import "github.com/MouseHatGames/mice/codec"
+
 // Options holds the configuration for a service instance
 type Options struct {
 	Name       string
 	ListenAddr string
+	Codec      codec.Codec
 }
 
 // Option represents a function that can be used to mutate an Options object

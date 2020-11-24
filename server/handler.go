@@ -4,6 +4,7 @@ import "reflect"
 
 type handler struct {
 	Name      string
+	Instance  interface{}
 	Endpoints map[string]*endpoint
 }
 
@@ -27,6 +28,7 @@ func newHandler(h interface{}) *handler {
 
 	return &handler{
 		Name:      name,
+		Instance:  h,
 		Endpoints: endpoints,
 	}
 }
