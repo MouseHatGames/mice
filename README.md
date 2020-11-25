@@ -7,6 +7,14 @@ Opinionated microservice framework designed for deployment on Kubernetes.
 Minimal example:
 
 ```go
+package main
+
+import (
+	"github.com/MouseHatGames/mice"
+	"github.com/MouseHatGames/mice-plugins/codec/json"
+	"github.com/MouseHatGames/mice-plugins/transport/grpc"
+)
+
 func main() {
 	svc := mice.NewService(
 		options.Name("my-service"),
