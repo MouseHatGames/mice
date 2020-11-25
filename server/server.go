@@ -29,12 +29,14 @@ func NewServer(opts *options.Options) Server {
 }
 
 func (s *server) Start() error {
-	l, err := s.opts.Transport.Listen(s.opts.ListenAddr)
+	ctx := context.Background()
+
+	l, err := s.opts.Transport.Listen(ctx, s.opts.ListenAddr)
 	if err != nil {
 		return err
 	}
 
-	if err := l.Accept(s.handle); err != nil {
+	if err := l.Accept(ctx, s.handle); err != nil {
 		return fmt.Errorf("accept connections: %w", err)
 	}
 
@@ -50,9 +52,10 @@ func (s *server) handle(soc transport.Socket) {
 		defer soc.Close()
 
 		var req transport.Message
+		ctx := context.Background()
 
 		for {
-			err := soc.Receive(&req)
+			err := soc.Receive(ctx, &req)
 			if err != nil {
 				if !errors.Is(err, io.EOF) {
 					s.log.Errorf("receive message: %s", err)
