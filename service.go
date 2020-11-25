@@ -34,6 +34,16 @@ func NewService(opts ...options.Option) Service {
 
 	svc.Apply(opts...)
 
+	if svc.options.Name == "" {
+		panic("no name defined")
+	}
+	if svc.options.Codec == nil {
+		panic("no codec defined")
+	}
+	if svc.options.Transport == nil {
+		panic("no transport defined")
+	}
+
 	svc.options.Router = router.NewRouter(svc.options.Codec, svc.options.Logger)
 	svc.server = server.NewServer(&svc.options)
 	svc.client = client.NewClient(&svc.options)
