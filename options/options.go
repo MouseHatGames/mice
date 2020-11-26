@@ -1,6 +1,7 @@
 package options
 
 import (
+	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/codec"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/router"
@@ -15,6 +16,7 @@ type Options struct {
 	Codec      codec.Codec
 	Transport  transport.Transport
 	Router     router.Router
+	Broker     broker.Broker
 }
 
 // Option represents a function that can be used to mutate an Options object

@@ -1,7 +1,9 @@
 package mice
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/MouseHatGames/mice/client"
 	"github.com/MouseHatGames/mice/logger"
@@ -63,6 +65,12 @@ func (s *service) Start() error {
 	}
 	if s.options.ListenAddr == "" {
 		return errors.New("missing listen address")
+	}
+
+	if s.options.Broker != nil {
+		if err := s.options.Broker.Connect(context.Background()); err != nil {
+			return fmt.Errorf("broker connect: %w", err)
+		}
 	}
 
 	return s.server.Start()
