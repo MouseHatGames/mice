@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/transport"
@@ -14,6 +15,7 @@ import (
 type Server interface {
 	Start() error
 	AddHandler(h interface{})
+	Publish(ctx context.Context, topic string, data interface{}) error
 }
 
 type server struct {
@@ -94,4 +96,21 @@ func (s *server) handleRequest(req *transport.Message, soc transport.Socket) {
 	if err := soc.Send(context.Background(), &resp); err != nil {
 		s.log.Errorf("send response: %s", err)
 	}
+}
+
+func (s *server) Publish(ctx context.Context, topic string, data interface{}) error {
+	if s.opts.Broker == nil {
+		panic("no broker has been declared")
+	}
+
+	b, err := s.opts.Codec.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("marshal data: %w", err)
+	}
+
+	if err := s.opts.Broker.Publish(ctx, topic, &broker.Message{Data: b}); err != nil {
+		return fmt.Errorf("publish message: %w", err)
+	}
+
+	return nil
 }
