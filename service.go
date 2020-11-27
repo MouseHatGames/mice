@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/MouseHatGames/mice/client"
+	"github.com/MouseHatGames/mice/config"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/router"
@@ -16,6 +17,8 @@ import (
 type Service interface {
 	// Apply applies one or more options to the service's configuration
 	Apply(opts ...options.Option)
+
+	Config() config.Config
 
 	Server() server.Server
 	Client() client.Client
@@ -57,6 +60,13 @@ func (s *service) Apply(opts ...options.Option) {
 	for _, o := range opts {
 		o(&s.options)
 	}
+}
+
+func (s *service) Config() config.Config {
+	if s.options.Config == nil {
+		panic("no config provider has been set up")
+	}
+	return s.options.Config
 }
 
 func (s *service) Start() error {

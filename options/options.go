@@ -3,6 +3,7 @@ package options
 import (
 	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/codec"
+	"github.com/MouseHatGames/mice/config"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/transport"
@@ -17,6 +18,7 @@ type Options struct {
 	Transport  transport.Transport
 	Router     router.Router
 	Broker     broker.Broker
+	Config     config.Config
 }
 
 // Option represents a function that can be used to mutate an Options object
