@@ -8,6 +8,7 @@ import (
 
 	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/codec"
+	"github.com/MouseHatGames/mice/discovery"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/transport"
@@ -27,6 +28,7 @@ type client struct {
 	trans  transport.Transport
 	broker broker.Broker
 	log    logger.Logger
+	disc   discovery.Discovery
 }
 
 type CallError struct {

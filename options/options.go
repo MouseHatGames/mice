@@ -4,6 +4,7 @@ import (
 	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/codec"
 	"github.com/MouseHatGames/mice/config"
+	"github.com/MouseHatGames/mice/discovery"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/transport"
@@ -20,6 +21,7 @@ type Options struct {
 	Router    router.Router
 	Broker    broker.Broker
 	Config    config.Config
+	Discovery discovery.Discovery
 }
 
 // Option represents a function that can be used to mutate an Options object
@@ -43,19 +45,5 @@ func RPCPort(port int16) Option {
 func Logger(l logger.Logger) Option {
 	return func(o *Options) {
 		o.Logger = l
-	}
-}
-
-// Codec sets the codec that will transform the messages
-func Codec(c codec.Codec) Option {
-	return func(o *Options) {
-		o.Codec = c
-	}
-}
-
-// Transport sets the transport that will deliver and receive messages to and from other services
-func Transport(t transport.Transport) Option {
-	return func(o *Options) {
-		o.Transport = t
 	}
 }

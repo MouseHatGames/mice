@@ -1,7 +1,6 @@
 package mice
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -23,6 +22,10 @@ type Service interface {
 	Server() server.Server
 	Client() client.Client
 
+	Start() error
+}
+
+type starter interface {
 	Start() error
 }
 
@@ -75,13 +78,29 @@ func (s *service) Start() error {
 		return errors.New("missing service name")
 	}
 
-	if s.options.Broker != nil {
-		if err := s.options.Broker.Connect(context.Background()); err != nil {
-			return fmt.Errorf("broker connect: %w", err)
-		}
+	if err := tryStart(map[string]interface{}{
+		"broker":    s.options.Broker,
+		"codec":     s.options.Codec,
+		"config":    s.options.Config,
+		"discovery": s.options.Discovery,
+		"logger":    s.options.Logger,
+		"transport": s.options.Transport,
+	}); err != nil {
+		return err
 	}
 
 	return s.server.Start()
+}
+
+func tryStart(objs map[string]interface{}) error {
+	for k, v := range objs {
+		if s, ok := v.(starter); ok {
+			if err := s.Start(); err != nil {
+				return fmt.Errorf("start %s: %w", k, err)
+			}
+		}
+	}
+	return nil
 }
 
 func (s *service) Server() server.Server {
