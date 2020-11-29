@@ -11,14 +11,15 @@ import (
 
 // Options holds the configuration for a service instance
 type Options struct {
-	Name       string
-	ListenAddr string
-	Logger     logger.Logger
-	Codec      codec.Codec
-	Transport  transport.Transport
-	Router     router.Router
-	Broker     broker.Broker
-	Config     config.Config
+	Name    string
+	RPCPort int16
+
+	Logger    logger.Logger
+	Codec     codec.Codec
+	Transport transport.Transport
+	Router    router.Router
+	Broker    broker.Broker
+	Config    config.Config
 }
 
 // Option represents a function that can be used to mutate an Options object
@@ -31,10 +32,10 @@ func Name(name string) Option {
 	}
 }
 
-// ListenAddr sets the address in which the gRPC server will listen on
-func ListenAddr(addr string) Option {
+// RPCPort sets the port in which this service's RPC will listen on, as well as the port in which other services' RPC servers are listening on
+func RPCPort(port int16) Option {
 	return func(o *Options) {
-		o.ListenAddr = addr
+		o.RPCPort = port
 	}
 }
 

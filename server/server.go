@@ -33,7 +33,7 @@ func NewServer(opts *options.Options) Server {
 func (s *server) Start() error {
 	ctx := context.Background()
 
-	l, err := s.opts.Transport.Listen(ctx, s.opts.ListenAddr)
+	l, err := s.opts.Transport.Listen(ctx, fmt.Sprintf(":%d", s.opts.RPCPort))
 	if err != nil {
 		return err
 	}

@@ -36,6 +36,7 @@ type service struct {
 func NewService(opts ...options.Option) Service {
 	svc := &service{}
 	svc.options.Logger = logger.NewStdoutLogger()
+	svc.options.RPCPort = 7070
 
 	svc.Apply(opts...)
 
@@ -72,9 +73,6 @@ func (s *service) Config() config.Config {
 func (s *service) Start() error {
 	if s.options.Name == "" {
 		return errors.New("missing service name")
-	}
-	if s.options.ListenAddr == "" {
-		return errors.New("missing listen address")
 	}
 
 	if s.options.Broker != nil {
