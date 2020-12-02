@@ -24,6 +24,9 @@ type Options struct {
 	Discovery discovery.Discovery
 }
 
+// DefaultRPCPort is the port that will be used for RPC connections if no other is specified
+const DefaultRPCPort = 7070
+
 // Option represents a function that can be used to mutate an Options object
 type Option func(*Options)
 
@@ -34,7 +37,8 @@ func Name(name string) Option {
 	}
 }
 
-// RPCPort sets the port in which this service's RPC will listen on, as well as the port in which other services' RPC servers are listening on
+// RPCPort sets the port in which this service's RPC will listen on, as well as the port in which other services' RPC servers are listening on.
+// Defaults to DefaultRPCPort
 func RPCPort(port int16) Option {
 	return func(o *Options) {
 		o.RPCPort = port

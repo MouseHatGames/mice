@@ -19,7 +19,7 @@ var ErrInvalidInput = errors.New("func must have 1 input")
 var ErrInputPointer = errors.New("the func must take a pointer as an input")
 
 type Client interface {
-	Call(ctx context.Context, service string, path string, req interface{}, resp interface{}, opts ...CallOption) error
+	Call(service string, path string, req interface{}, resp interface{}, opts ...CallOption) error
 	Subscribe(topic string, callback interface{})
 }
 
@@ -29,6 +29,7 @@ type client struct {
 	broker broker.Broker
 	log    logger.Logger
 	disc   discovery.Discovery
+	port   int16
 }
 
 type CallError struct {
@@ -45,10 +46,12 @@ func NewClient(opts *options.Options) Client {
 		trans:  opts.Transport,
 		broker: opts.Broker,
 		log:    opts.Logger,
+		disc:   opts.Discovery,
+		port:   opts.RPCPort,
 	}
 }
 
-func (c *client) Call(ctx context.Context, service string, path string, reqval interface{}, respval interface{}, opts ...CallOption) error {
+func (c *client) Call(service string, path string, reqval interface{}, respval interface{}, opts ...CallOption) error {
 	var callopts CallOptions
 
 	for _, o := range opts {
@@ -59,7 +62,16 @@ func (c *client) Call(ctx context.Context, service string, path string, reqval i
 		callopts.Context = context.Background()
 	}
 
-	s, err := c.trans.Dial(ctx, service)
+	if c.disc == nil {
+		panic("no discovery has been set up")
+	}
+
+	host, err := c.disc.Find(service)
+	if err != nil {
+		return fmt.Errorf("discover service: %w", err)
+	}
+
+	s, err := c.trans.Dial(callopts.Context, fmt.Sprintf("%s:%d", host, c.port))
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}
@@ -80,7 +92,7 @@ func (c *client) Call(ctx context.Context, service string, path string, reqval i
 	}
 
 	var respmsg transport.Message
-	if err := s.Receive(ctx, &respmsg); err != nil {
+	if err := s.Receive(callopts.Context, &respmsg); err != nil {
 		return fmt.Errorf("receive message: %w", err)
 	}
 

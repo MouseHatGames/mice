@@ -39,7 +39,7 @@ type service struct {
 func NewService(opts ...options.Option) Service {
 	svc := &service{}
 	svc.options.Logger = logger.NewStdoutLogger()
-	svc.options.RPCPort = 7070
+	svc.options.RPCPort = options.DefaultRPCPort
 
 	svc.Apply(opts...)
 
