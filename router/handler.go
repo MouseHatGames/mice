@@ -25,7 +25,7 @@ func (e *HandlerError) Unwrap() error {
 	return e.err
 }
 
-func newHandler(h interface{}) *handler {
+func newHandler(h interface{}, methods map[string]bool) *handler {
 	handtype := reflect.TypeOf(h)
 	handval := reflect.ValueOf(h)
 	name := reflect.Indirect(handval).Type().Name()
@@ -34,6 +34,10 @@ func newHandler(h interface{}) *handler {
 
 	for i := 0; i < handtype.NumMethod(); i++ {
 		m := handtype.Method(i)
+
+		if methods != nil && !methods[m.Name] {
+			continue
+		}
 
 		e := getEndpoint(m)
 		if e == nil {

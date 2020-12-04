@@ -15,7 +15,7 @@ var ErrMalformedPath = errors.New("malformed request path")
 var ErrEndpointNotFound = errors.New("endpoint not found")
 
 type Router interface {
-	AddHandler(h interface{})
+	AddHandler(h interface{}, methods []string)
 	Handle(path string, data []byte) ([]byte, error)
 }
 
@@ -33,8 +33,13 @@ func NewRouter(cod codec.Codec, log logger.Logger) Router {
 	}
 }
 
-func (s *router) AddHandler(h interface{}) {
-	hdl := newHandler(h)
+func (s *router) AddHandler(h interface{}, methods []string) {
+	metmap := make(map[string]bool, len(methods))
+	for _, m := range methods {
+		metmap[m] = true
+	}
+
+	hdl := newHandler(h, metmap)
 	s.handlers[hdl.Name] = hdl
 
 	for k := range hdl.Endpoints {
