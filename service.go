@@ -2,7 +2,9 @@ package mice
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"os"
 
 	"github.com/MouseHatGames/mice/client"
 	"github.com/MouseHatGames/mice/config"
@@ -17,6 +19,7 @@ type Service interface {
 	// Apply applies one or more options to the service's configuration
 	Apply(opts ...options.Option)
 
+	Env() options.Environment
 	Config() config.Config
 
 	Server() server.Server
@@ -40,6 +43,7 @@ func NewService(opts ...options.Option) Service {
 	svc := &service{}
 	svc.options.Logger = logger.NewStdoutLogger()
 	svc.options.RPCPort = options.DefaultRPCPort
+	svc.options.Environment = getEnvironment()
 
 	svc.Apply(opts...)
 
@@ -60,10 +64,29 @@ func NewService(opts ...options.Option) Service {
 	return svc
 }
 
+func getEnvironment() options.Environment {
+	arg := flag.String("env", "", "")
+	flag.Parse()
+
+	if *arg != "" {
+		return options.ParseEnvironment(*arg)
+	}
+
+	if env, ok := os.LookupEnv("MICE_ENV"); ok {
+		return options.ParseEnvironment(env)
+	}
+
+	return options.EnvironmentDevelopment
+}
+
 func (s *service) Apply(opts ...options.Option) {
 	for _, o := range opts {
 		o(&s.options)
 	}
+}
+
+func (s *service) Env() options.Environment {
+	return s.options.Environment
 }
 
 func (s *service) Config() config.Config {
@@ -88,6 +111,8 @@ func (s *service) Start() error {
 	}); err != nil {
 		return err
 	}
+
+	s.options.Logger.Infof("starting on %s environment", s.options.Environment)
 
 	return s.server.Start()
 }

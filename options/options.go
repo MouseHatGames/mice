@@ -12,8 +12,9 @@ import (
 
 // Options holds the configuration for a service instance
 type Options struct {
-	Name    string
-	RPCPort int16
+	Name        string
+	RPCPort     int16
+	Environment Environment
 
 	Logger    logger.Logger
 	Codec     codec.Codec
@@ -49,5 +50,38 @@ func RPCPort(port int16) Option {
 func Logger(l logger.Logger) Option {
 	return func(o *Options) {
 		o.Logger = l
+	}
+}
+
+// WithEnvironment sets the environment that the service is running under
+func WithEnvironment(e Environment) Option {
+	return func(o *Options) {
+		o.Environment = e
+	}
+}
+
+// IfEnvironment conditionally applies options if running under a specific environment.
+//
+// Make sure this option comes after any WithEnvironment options, if any.
+func IfEnvironment(env Environment, opts ...Option) Option {
+	return func(o *Options) {
+		if o.Environment == env {
+			for _, opt := range opts {
+				opt(o)
+			}
+		}
+	}
+}
+
+// IfNotEnvironment conditionally applies options if running under any environment except for a specific one.
+//
+// Make sure this option comes after any WithEnvironment options, if any.
+func IfNotEnvironment(env Environment, opts ...Option) Option {
+	return func(o *Options) {
+		if o.Environment != env {
+			for _, opt := range opts {
+				opt(o)
+			}
+		}
 	}
 }
