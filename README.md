@@ -18,7 +18,7 @@ import (
 func main() {
 	svc := mice.NewService(
 		options.Name("my-service"),
-		options.ListenAddr(":8080"),
+		options.RPCPort(8080),
 		json.Codec(),
 		grpc.Transport(),
 	)
