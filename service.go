@@ -21,6 +21,7 @@ type Service interface {
 
 	Env() options.Environment
 	Config() config.Config
+	Name() string
 
 	Server() server.Server
 	Client() client.Client
@@ -94,6 +95,10 @@ func (s *service) Config() config.Config {
 		panic("no config provider has been set up")
 	}
 	return s.options.Config
+}
+
+func (s *service) Name() string {
+	return s.options.Name
 }
 
 func (s *service) Start() error {
