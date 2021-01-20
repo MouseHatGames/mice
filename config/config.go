@@ -4,7 +4,7 @@ import "time"
 
 type Config interface {
 	Get(path ...string) Value
-	Del(path ...string) error
+	Delete(path ...string) error
 	Set(val interface{}, path ...string) error
 }
 
