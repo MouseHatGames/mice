@@ -9,12 +9,19 @@ type Config interface {
 }
 
 type Value interface {
-	Bool(def bool) bool
-	Int(def int) int
-	String(def string) string
-	Float64(def float64) float64
-	Duration(def time.Duration) time.Duration
-	Strings(def []string) []string
-	StringMap(def map[string]string) map[string]string
-	Scan(val interface{}) error
+	Error() error
+	Raw() string
+	Scan(v interface{}) error
+	String() (string, bool)
+	StringOr(def string) string
+	Int32() (int32, bool)
+	Int32Or(def int32) int32
+	Int64() (int64, bool)
+	Int64Or(def int64) int64
+	Bool() (bool, bool)
+	BoolOr(def bool) bool
+	Float64() (float64, bool)
+	Float64Or(def float64) float64
+	Duration() (time.Duration, bool)
+	DurationOr(def time.Duration) time.Duration
 }
