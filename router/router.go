@@ -73,26 +73,24 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("decode request: %w", err)
 	}
 
+	respValue := reflect.New(method.Out)
+
 	ret := method.HandlerFunc.Call([]reflect.Value{
 		reflect.ValueOf(handler.Instance),
 		reflect.ValueOf(context.Background()),
 		*in,
+		respValue,
 	})
 
-	if len(ret) == 2 && !ret[1].IsNil() {
+	if !ret[0].IsNil() {
 		return nil, &HandlerError{
 			endpoint: method,
 			handler:  handler,
-			err:      ret[1].Interface().(error),
+			err:      ret[0].Interface().(error),
 		}
 	}
 
-	retval := ret[0]
-	if len(ret) == 2 {
-		retval = ret[1]
-	}
-
-	outdata, err := s.codec.Marshal(retval.Interface())
+	outdata, err := s.codec.Marshal(respValue.Interface())
 	if err != nil {
 		return nil, fmt.Errorf("encode response: %w", err)
 	}

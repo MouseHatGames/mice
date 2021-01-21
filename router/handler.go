@@ -60,13 +60,13 @@ func getEndpoint(m reflect.Method) *endpoint {
 		return nil
 	}
 
-	// Functions must have inputs like (c context.Context, d *data.Data), plus one input for the receiver
-	if m.Type.NumIn() != 3 {
+	// Functions must have inputs like (c context.Context, req *data.Request, resp *data.Response), plus one input for the receiver
+	if m.Type.NumIn() != 4 {
 		return nil
 	}
 
-	// Functions must return either 1 or 2 values
-	if m.Type.NumOut() == 0 || m.Type.NumOut() > 2 {
+	// Functions must return an error value
+	if m.Type.NumOut() != 1 {
 		return nil
 	}
 
@@ -74,6 +74,6 @@ func getEndpoint(m reflect.Method) *endpoint {
 		Name:        m.Name,
 		HandlerFunc: m.Func,
 		In:          m.Type.In(2),
-		Out:         m.Type.Out(0),
+		Out:         m.Type.In(3),
 	}
 }
