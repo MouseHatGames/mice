@@ -104,6 +104,10 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 		return fmt.Errorf("decode response: %w", err)
 	}
 
+	if err, ok := respmsg.GetError(); ok {
+		return err
+	}
+
 	return nil
 }
 

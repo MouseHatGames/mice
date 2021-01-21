@@ -1,5 +1,11 @@
 package transport
 
+import (
+	goerrors "errors"
+
+	"github.com/MouseHatGames/mice/errors"
+)
+
 type Message struct {
 	Headers map[string]string
 	Data    []byte
@@ -12,5 +18,32 @@ func NewMessage() *Message {
 }
 
 func (m *Message) SetError(err error) {
-	m.Headers[HeaderError] = err.Error()
+	var value string
+
+	if merr, ok := err.(*errors.Error); ok {
+		enc, err := merr.Encode()
+
+		if err != nil {
+			value = err.Error()
+		} else {
+			value = enc
+		}
+	} else {
+		value = err.Error()
+	}
+
+	m.Headers[HeaderError] = value
+}
+
+func (m *Message) GetError() (err error, hasError bool) {
+	value, ok := m.Headers[HeaderError]
+	if !ok {
+		return nil, false
+	}
+
+	if merr, err := errors.Decode(value); err != nil {
+		return merr, true
+	}
+
+	return goerrors.New(value), true
 }
