@@ -3,7 +3,6 @@ package transport
 import (
 	"context"
 	"errors"
-	"net"
 )
 
 var ErrTooManyHeaders = errors.New("too many headers")
@@ -22,6 +21,5 @@ type Socket interface {
 
 type Listener interface {
 	Close() error
-	Addr() net.Addr
 	Accept(ctx context.Context, fn func(Socket)) error
 }
