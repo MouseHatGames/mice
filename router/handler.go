@@ -25,10 +25,8 @@ func (e *HandlerError) Unwrap() error {
 	return e.err
 }
 
-func newHandler(h interface{}, methods map[string]bool) *handler {
+func newHandler(h interface{}, name string, methods map[string]bool) *handler {
 	handtype := reflect.TypeOf(h)
-	handval := reflect.ValueOf(h)
-	name := reflect.Indirect(handval).Type().Name()
 
 	endpoints := make(map[string]*endpoint)
 

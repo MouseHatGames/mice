@@ -14,7 +14,7 @@ import (
 
 type Server interface {
 	Start() error
-	AddHandler(h interface{}, methods ...string)
+	AddHandler(h interface{}, name string, methods ...string)
 	Publish(ctx context.Context, topic string, data interface{}) error
 }
 
@@ -45,8 +45,8 @@ func (s *server) Start() error {
 	return nil
 }
 
-func (s *server) AddHandler(h interface{}, methods ...string) {
-	s.opts.Router.AddHandler(h, methods)
+func (s *server) AddHandler(h interface{}, name string, methods ...string) {
+	s.opts.Router.AddHandler(h, name, methods)
 }
 
 func (s *server) handle(soc transport.Socket) {
