@@ -78,7 +78,7 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 	ret := method.HandlerFunc.Call([]reflect.Value{
 		reflect.ValueOf(handler.Instance),
 		reflect.ValueOf(context.Background()),
-		*in,
+		in,
 		respValue,
 	})
 
@@ -98,17 +98,13 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 	return outdata, nil
 }
 
-func (s *router) decode(t reflect.Type, d []byte) (*reflect.Value, error) {
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-
+func (s *router) decode(t reflect.Type, d []byte) (reflect.Value, error) {
 	val := reflect.New(t)
 	intf := val.Interface()
 
 	if err := s.codec.Unmarshal(d, intf); err != nil {
-		return nil, err
+		return reflect.Value{}, err
 	}
 
-	return &val, nil
+	return val, nil
 }

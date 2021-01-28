@@ -63,6 +63,10 @@ func getEndpoint(m reflect.Method) *endpoint {
 		return nil
 	}
 
+	if m.Type.In(2).Kind() != reflect.Ptr || m.Type.In(3).Kind() != reflect.Ptr {
+		return nil
+	}
+
 	// Functions must return an error value
 	if m.Type.NumOut() != 1 {
 		return nil
@@ -71,7 +75,7 @@ func getEndpoint(m reflect.Method) *endpoint {
 	return &endpoint{
 		Name:        m.Name,
 		HandlerFunc: m.Func,
-		In:          m.Type.In(2),
-		Out:         m.Type.In(3),
+		In:          m.Type.In(2).Elem(),
+		Out:         m.Type.In(3).Elem(),
 	}
 }
