@@ -67,8 +67,7 @@ func (s *server) handle(soc transport.Socket) {
 				break
 			}
 
-			//TODO: Fix potential race condition where the socket gets closed before this method sends the response
-			go s.handleRequest(&req, soc)
+			s.handleRequest(&req, soc)
 		}
 	}()
 }
