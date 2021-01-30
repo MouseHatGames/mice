@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 type Error struct {
@@ -14,14 +13,14 @@ type Error struct {
 	ID, Detail string
 }
 
-func NewError(code int16, format string, a ...interface{}) error {
+func NewError(code int16, format string, a ...interface{}) *Error {
 	return &Error{
 		StatusCode: code,
 		Detail:     fmt.Sprintf(format, a...),
 	}
 }
 
-func NewErrorID(id string, code int16, format string, a ...interface{}) error {
+func NewErrorID(id string, code int16, format string, a ...interface{}) *Error {
 	return &Error{
 		StatusCode: code,
 		ID:         id,
@@ -43,7 +42,12 @@ func (e *Error) Encode() (string, error) {
 
 // Decode tries to decode en error from a base64-encoded string
 func Decode(str string) (*Error, error) {
-	b := strings.NewReader(str)
+	bdec, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, err
+	}
+
+	b := bytes.NewReader(bdec)
 	dec := gob.NewDecoder(b)
 
 	var merr Error
