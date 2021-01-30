@@ -11,12 +11,20 @@ import (
 
 type Error struct {
 	StatusCode int16
-	Detail     string
+	ID, Detail string
 }
 
 func NewError(code int16, format string, a ...interface{}) error {
 	return &Error{
 		StatusCode: code,
+		Detail:     fmt.Sprintf(format, a...),
+	}
+}
+
+func NewErrorID(id string, code int16, format string, a ...interface{}) error {
+	return &Error{
+		StatusCode: code,
+		ID:         id,
 		Detail:     fmt.Sprintf(format, a...),
 	}
 }
