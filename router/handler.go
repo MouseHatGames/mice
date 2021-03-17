@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -9,20 +8,6 @@ type handler struct {
 	Name      string
 	Instance  interface{}
 	Endpoints map[string]*endpoint
-}
-
-type HandlerError struct {
-	endpoint *endpoint
-	handler  *handler
-	err      error
-}
-
-func (e *HandlerError) Error() string {
-	return fmt.Sprintf("handler %s.%s: %s", e.handler.Name, e.endpoint.Name, e.err)
-}
-
-func (e *HandlerError) Unwrap() error {
-	return e.err
 }
 
 func newHandler(h interface{}, name string, methods map[string]bool) *handler {

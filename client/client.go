@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"reflect"
@@ -32,14 +33,6 @@ type client struct {
 	port   int16
 }
 
-type CallError struct {
-	msg string
-}
-
-func (c *CallError) Error() string {
-	return c.msg
-}
-
 func NewClient(opts *options.Options) Client {
 	return &client{
 		codec:  opts.Codec,
@@ -66,46 +59,48 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 		panic("no discovery has been set up")
 	}
 
+	// Find service address
 	host, err := c.disc.Find(service)
 	if err != nil {
 		return fmt.Errorf("discover service: %w", err)
 	}
 
+	// Connect to service
 	s, err := c.trans.Dial(callopts.Context, fmt.Sprintf("%s:%d", host, c.port))
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}
 	defer s.Close()
 
-	reqid := "TODO: Generate ID"
 	req := transport.NewMessage()
-	req.Headers[transport.HeaderRequestID] = reqid
+	req.Headers[transport.HeaderRequestID] = pseudo_uuid()
 	req.Headers[transport.HeaderPath] = path
 
+	// Encode request data
 	req.Data, err = c.codec.Marshal(reqval)
 	if err != nil {
 		return fmt.Errorf("encode request: %w", err)
 	}
 
+	// Send request
 	if err := s.Send(callopts.Context, req); err != nil {
 		return fmt.Errorf("send message: %w", err)
 	}
 
+	// Receive response
 	var respmsg transport.Message
 	if err := s.Receive(callopts.Context, &respmsg); err != nil {
 		return fmt.Errorf("receive message: %w", err)
 	}
 
-	if err, ok := respmsg.Headers[transport.HeaderError]; ok {
-		return &CallError{err}
-	}
-
-	if err := c.codec.Unmarshal(respmsg.Data, respval); err != nil {
-		return fmt.Errorf("decode response: %w", err)
-	}
-
+	// Check for server handler error
 	if err, ok := respmsg.GetError(); ok {
 		return err
+	}
+
+	// Decode response data
+	if err := c.codec.Unmarshal(respmsg.Data, respval); err != nil {
+		return fmt.Errorf("decode response: %w", err)
 	}
 
 	return nil
@@ -164,4 +159,18 @@ func (c *client) createCallback(intf interface{}) (func(*broker.Message), error)
 
 		val.Call([]reflect.Value{data})
 	}, nil
+}
+
+// https://stackoverflow.com/a/25736155
+func pseudo_uuid() (uuid string) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	uuid = fmt.Sprintf("%x%x-%x%x%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+
+	return
 }

@@ -83,11 +83,7 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 	})
 
 	if !ret[0].IsNil() {
-		return nil, &HandlerError{
-			endpoint: method,
-			handler:  handler,
-			err:      ret[0].Interface().(error),
-		}
+		return nil, ret[0].Interface().(error)
 	}
 
 	outdata, err := s.codec.Marshal(respValue.Interface())
