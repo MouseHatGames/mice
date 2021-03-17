@@ -41,7 +41,7 @@ func (m *Message) GetError() (err error, hasError bool) {
 		return nil, false
 	}
 
-	if merr, err := errors.Decode(value); err != nil {
+	if merr, ok := errors.Decode(value); ok {
 		return merr, true
 	}
 

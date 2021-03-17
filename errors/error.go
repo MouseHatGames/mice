@@ -41,10 +41,10 @@ func (e *Error) Encode() (string, error) {
 }
 
 // Decode tries to decode en error from a base64-encoded string
-func Decode(str string) (*Error, error) {
+func Decode(str string) (*Error, bool) {
 	bdec, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
-		return nil, err
+		return nil, false
 	}
 
 	b := bytes.NewReader(bdec)
@@ -52,10 +52,10 @@ func Decode(str string) (*Error, error) {
 
 	var merr Error
 	if err := dec.Decode(&merr); err != nil {
-		return nil, err
+		return nil, false
 	}
 
-	return &merr, nil
+	return &merr, true
 }
 
 func (e *Error) Error() string {
