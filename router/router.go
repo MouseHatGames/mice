@@ -9,6 +9,7 @@ import (
 
 	"github.com/MouseHatGames/mice/codec"
 	"github.com/MouseHatGames/mice/logger"
+	"github.com/MouseHatGames/mice/tracing"
 	"github.com/MouseHatGames/mice/transport"
 )
 
@@ -77,6 +78,7 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	respValue := reflect.New(method.Out)
 
 	ctx := transport.ContextWithRequest(context.Background(), req)
+	ctx = tracing.ExtractFromMessage(ctx, req)
 
 	ret := method.HandlerFunc.Call([]reflect.Value{
 		reflect.ValueOf(handler.Instance),
@@ -86,7 +88,9 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	})
 
 	if !ret[0].IsNil() {
-		return nil, ret[0].Interface().(error)
+		err := ret[0].Interface().(error)
+
+		return nil, err
 	}
 
 	outdata, err := s.codec.Marshal(respValue.Interface())

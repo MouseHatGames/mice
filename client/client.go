@@ -12,7 +12,10 @@ import (
 	"github.com/MouseHatGames/mice/discovery"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
+	"github.com/MouseHatGames/mice/tracing"
 	"github.com/MouseHatGames/mice/transport"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var ErrMustBeFunc = errors.New("value must be a function")
@@ -51,9 +54,19 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 		o(&callopts)
 	}
 
-	if callopts.Context == nil {
-		callopts.Context = context.Background()
+	parentReq, hasParent := transport.GetContextRequest(callopts.Context)
+
+	ctx := callopts.Context
+	if ctx == nil {
+		ctx = context.Background()
 	}
+
+	ctx = tracing.ExtractFromMessage(ctx, parentReq)
+
+	ctx, span := tracing.Tracer.Start(ctx, path)
+	defer span.End()
+
+	span.SetAttributes(attribute.String("peer.service", service))
 
 	if c.disc == nil {
 		panic("no discovery has been set up")
@@ -76,7 +89,6 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	req.SetRandomRequestID()
 	req.SetPath(path)
 
-	parentReq, hasParent := transport.GetContextRequest(callopts.Context)
 	if hasParent {
 		req.MessageHeaders[transport.HeaderParentRequestID] = parentReq.MessageHeaders[transport.HeaderRequestID]
 	}
@@ -100,6 +112,9 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 
 	// Check for server handler error
 	if err, ok := respmsg.GetError(); ok {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "handler failed")
+
 		return err
 	}
 
