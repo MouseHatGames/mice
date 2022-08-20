@@ -7,8 +7,8 @@ func TestEncodeDecode(t *testing.T) {
 
 	str, _ := err.Encode()
 	err2, e := Decode(str)
-	if e != nil {
-		t.Fatalf("failed to decode: %s", e)
+	if !e {
+		t.Fatalf("failed to decode")
 	}
 
 	if err2.StatusCode != err.StatusCode {

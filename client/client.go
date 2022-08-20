@@ -73,8 +73,8 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	defer s.Close()
 
 	req := transport.NewMessage()
-	req.Headers[transport.HeaderRequestID] = pseudo_uuid()
-	req.Headers[transport.HeaderPath] = path
+	req.SetRandomRequestID()
+	req.SetPath(path)
 
 	// Encode request data
 	req.Data, err = c.codec.Marshal(reqval)

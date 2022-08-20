@@ -73,16 +73,14 @@ func (s *server) handle(soc transport.Socket) {
 }
 
 func (s *server) handleRequest(req *transport.Message, soc transport.Socket) {
-	path, ok := req.Headers[transport.HeaderPath]
+	path, ok := req.GetPath()
 	if !ok {
 		s.log.Errorf("missing path header")
 		return
 	}
 
 	var resp transport.Message
-	resp.Headers = map[string]string{
-		transport.HeaderRequestID: req.Headers[transport.HeaderRequestID],
-	}
+	resp.SetRequestID(req.MustGetRequestID())
 
 	ret, err := s.opts.Router.Handle(path, req.Data)
 
