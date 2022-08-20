@@ -82,7 +82,7 @@ func (s *server) handleRequest(req *transport.Message, soc transport.Socket) {
 	var resp transport.Message
 	resp.SetRequestID(req.MustGetRequestID())
 
-	ret, err := s.opts.Router.Handle(path, req.Data)
+	ret, err := s.opts.Router.Handle(path, req)
 
 	if err != nil {
 		resp.SetError(err)

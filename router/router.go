@@ -9,6 +9,7 @@ import (
 
 	"github.com/MouseHatGames/mice/codec"
 	"github.com/MouseHatGames/mice/logger"
+	"github.com/MouseHatGames/mice/transport"
 )
 
 var ErrMalformedPath = errors.New("malformed request path")
@@ -16,7 +17,7 @@ var ErrEndpointNotFound = errors.New("endpoint not found")
 
 type Router interface {
 	AddHandler(h interface{}, name string, methods []string)
-	Handle(path string, data []byte) ([]byte, error)
+	Handle(path string, req *transport.Message) ([]byte, error)
 }
 
 type router struct {
@@ -47,7 +48,7 @@ func (s *router) AddHandler(h interface{}, name string, methods []string) {
 	}
 }
 
-func (s *router) Handle(path string, data []byte) ([]byte, error) {
+func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	s.log.Debugf("request to %s", path)
 
 	dotidx := strings.IndexRune(path, '.')
@@ -68,16 +69,18 @@ func (s *router) Handle(path string, data []byte) ([]byte, error) {
 		return nil, ErrEndpointNotFound
 	}
 
-	in, err := s.decode(method.In, data)
+	in, err := s.decode(method.In, req.Data)
 	if err != nil {
 		return nil, fmt.Errorf("decode request: %w", err)
 	}
 
 	respValue := reflect.New(method.Out)
 
+	ctx := ctxWithRequest(context.Background(), req)
+
 	ret := method.HandlerFunc.Call([]reflect.Value{
 		reflect.ValueOf(handler.Instance),
-		reflect.ValueOf(context.Background()),
+		reflect.ValueOf(ctx),
 		in,
 		respValue,
 	})
