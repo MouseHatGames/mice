@@ -8,10 +8,11 @@ import (
 
 	"github.com/MouseHatGames/mice/client"
 	"github.com/MouseHatGames/mice/config"
-	"github.com/MouseHatGames/mice/logger"
+	"github.com/MouseHatGames/mice/logger/stdout"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/server"
+	"github.com/MouseHatGames/mice/tracing"
 )
 
 // Service represents a service that can receive and send requests
@@ -42,10 +43,11 @@ type service struct {
 // NewService instantiates a new service and initializes it with options
 func NewService(opts ...options.Option) Service {
 	svc := &service{}
-	svc.options.Logger = logger.NewStdoutLogger()
 	svc.options.RPCPort = options.DefaultRPCPort
 	svc.options.Environment = getEnvironment()
+	svc.options.Tracer = tracing.NoopTracer()
 
+	svc.Apply(stdout.Logger())
 	svc.Apply(opts...)
 
 	if svc.options.Name == "" {
@@ -66,8 +68,9 @@ func NewService(opts ...options.Option) Service {
 }
 
 func getEnvironment() options.Environment {
-	arg := flag.String("env", "", "")
-	flag.Parse()
+	set := flag.NewFlagSet("cmd", flag.ContinueOnError)
+	arg := set.String("env", "", "")
+	set.Parse(os.Args)
 
 	if *arg != "" {
 		return options.ParseEnvironment(*arg)

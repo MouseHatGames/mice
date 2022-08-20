@@ -16,6 +16,7 @@ import (
 	"github.com/MouseHatGames/mice/transport"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var ErrMustBeFunc = errors.New("value must be a function")
@@ -28,6 +29,7 @@ type Client interface {
 }
 
 type client struct {
+	tracer trace.Tracer
 	codec  codec.Codec
 	trans  transport.Transport
 	broker broker.Broker
@@ -44,6 +46,7 @@ func NewClient(opts *options.Options) Client {
 		log:    opts.Logger,
 		disc:   opts.Discovery,
 		port:   opts.RPCPort,
+		tracer: opts.Tracer,
 	}
 }
 
@@ -63,7 +66,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 
 	ctx = tracing.ExtractFromMessage(ctx, parentReq)
 
-	ctx, span := tracing.Tracer.Start(ctx, path)
+	ctx, span := c.tracer.Start(ctx, path)
 	defer span.End()
 
 	span.SetAttributes(attribute.String("peer.service", service))
@@ -79,7 +82,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	}
 
 	// Connect to service
-	s, err := c.trans.Dial(callopts.Context, fmt.Sprintf("%s:%d", host, c.port))
+	s, err := c.trans.Dial(ctx, fmt.Sprintf("%s:%d", host, c.port))
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}
@@ -88,6 +91,8 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	req := transport.NewMessage()
 	req.SetRandomRequestID()
 	req.SetPath(path)
+
+	tracing.InjectToMessage(ctx, req)
 
 	if hasParent {
 		req.MessageHeaders[transport.HeaderParentRequestID] = parentReq.MessageHeaders[transport.HeaderRequestID]
@@ -100,13 +105,13 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	}
 
 	// Send request
-	if err := s.Send(callopts.Context, req); err != nil {
+	if err := s.Send(ctx, req); err != nil {
 		return fmt.Errorf("send message: %w", err)
 	}
 
 	// Receive response
 	var respmsg transport.Message
-	if err := s.Receive(callopts.Context, &respmsg); err != nil {
+	if err := s.Receive(ctx, &respmsg); err != nil {
 		return fmt.Errorf("receive message: %w", err)
 	}
 

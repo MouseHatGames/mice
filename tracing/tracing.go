@@ -5,12 +5,10 @@ import (
 	"strings"
 
 	"github.com/MouseHatGames/mice/transport"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 )
 
-var Tracer = otel.GetTracerProvider().Tracer("mice")
-var Propagator = &propagation.TraceContext{}
+var propagator = &propagation.TraceContext{}
 
 const headerPrefix = "tracing-"
 
@@ -19,12 +17,12 @@ func ExtractFromMessage(ctx context.Context, msg *transport.Message) context.Con
 		return ctx
 	}
 
-	return Propagator.Extract(ctx, &carrierMessage{msg})
+	return propagator.Extract(ctx, &carrierMessage{msg})
 }
 
 func InjectToMessage(ctx context.Context, msg *transport.Message) {
 	if msg != nil {
-		Propagator.Inject(ctx, &carrierMessage{msg})
+		propagator.Inject(ctx, &carrierMessage{msg})
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/transport"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Options holds the configuration for a service instance
@@ -23,6 +24,7 @@ type Options struct {
 	Broker    broker.Broker
 	Config    config.Config
 	Discovery discovery.Discovery
+	Tracer    trace.Tracer
 }
 
 // DefaultRPCPort is the port that will be used for RPC connections if no other is specified
@@ -83,5 +85,12 @@ func IfNotEnvironment(env Environment, opts ...Option) Option {
 				opt(o)
 			}
 		}
+	}
+}
+
+// Tracer sets the OpenTelemetry tracer to use.
+func Tracer(tracer trace.Tracer) Option {
+	return func(o *Options) {
+		o.Tracer = tracer
 	}
 }

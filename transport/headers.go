@@ -16,13 +16,21 @@ const (
 
 type MessageHeaders map[string]string
 
+func (h *MessageHeaders) ensure() MessageHeaders {
+	if *h == nil {
+		*h = make(MessageHeaders)
+	}
+
+	return *h
+}
+
 func (h MessageHeaders) GetPath() (path string, hasPath bool) {
 	path, hasPath = h[HeaderPath]
 	return
 }
 
-func (h MessageHeaders) SetPath(path string) {
-	h[HeaderPath] = path
+func (h *MessageHeaders) SetPath(path string) {
+	h.ensure()[HeaderPath] = path
 }
 
 func (h MessageHeaders) GetError() (err error, hasError bool) {
@@ -38,7 +46,7 @@ func (h MessageHeaders) GetError() (err error, hasError bool) {
 	return goerrors.New(value), true
 }
 
-func (h MessageHeaders) SetError(err error) {
+func (h *MessageHeaders) SetError(err error) {
 	var value string
 
 	if merr, ok := err.(*errors.Error); ok {
@@ -53,7 +61,7 @@ func (h MessageHeaders) SetError(err error) {
 		value = err.Error()
 	}
 
-	h[HeaderError] = value
+	h.ensure()[HeaderError] = value
 }
 
 func (h MessageHeaders) GetRequestID() (id uuid.UUID, hasID bool) {
@@ -75,12 +83,12 @@ func (h MessageHeaders) MustGetRequestID() uuid.UUID {
 	return id
 }
 
-func (h MessageHeaders) SetRequestID(id uuid.UUID) {
-	h[HeaderRequestID] = id.String()
+func (h *MessageHeaders) SetRequestID(id uuid.UUID) {
+	h.ensure()[HeaderRequestID] = id.String()
 }
 
-func (h MessageHeaders) SetRandomRequestID() {
-	h[HeaderRequestID] = uuid.NewString()
+func (h *MessageHeaders) SetRandomRequestID() {
+	h.ensure()[HeaderRequestID] = uuid.NewString()
 }
 
 func (h MessageHeaders) GetParentRequestID() (id uuid.UUID, hasID bool) {
@@ -97,8 +105,8 @@ func (h MessageHeaders) GetParentRequestID() (id uuid.UUID, hasID bool) {
 	return id, true
 }
 
-func (h MessageHeaders) SetParentRequestID(id uuid.UUID) {
+func (h *MessageHeaders) SetParentRequestID(id uuid.UUID) {
 	if id != uuid.Nil {
-		h[HeaderParentRequestID] = id.String()
+		h.ensure()[HeaderParentRequestID] = id.String()
 	}
 }
