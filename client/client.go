@@ -76,6 +76,11 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	req.SetRandomRequestID()
 	req.SetPath(path)
 
+	parentReq, hasParent := transport.GetContextRequest(callopts.Context)
+	if hasParent {
+		req.SetParentRequestID(parentReq.MustGetRequestID())
+	}
+
 	// Encode request data
 	req.Data, err = c.codec.Marshal(reqval)
 	if err != nil {

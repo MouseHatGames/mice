@@ -7,6 +7,6 @@ type Message struct {
 
 func NewMessage() *Message {
 	return &Message{
-		MessageHeaders: make(map[string]string),
+		MessageHeaders: make(MessageHeaders),
 	}
 }

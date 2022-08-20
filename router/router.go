@@ -76,7 +76,7 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 
 	respValue := reflect.New(method.Out)
 
-	ctx := ctxWithRequest(context.Background(), req)
+	ctx := transport.ContextWithRequest(context.Background(), req)
 
 	ret := method.HandlerFunc.Call([]reflect.Value{
 		reflect.ValueOf(handler.Instance),

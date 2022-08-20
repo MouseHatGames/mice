@@ -8,39 +8,13 @@ import (
 )
 
 const (
-	HeaderPath      = "path"
-	HeaderError     = "error"
-	HeaderRequestID = "reqid"
+	HeaderPath            = "path"
+	HeaderError           = "error"
+	HeaderRequestID       = "reqid"
+	HeaderParentRequestID = "parentreq"
 )
 
 type MessageHeaders map[string]string
-
-func (h MessageHeaders) GetRequestID() (id uuid.UUID, hasID bool) {
-	uuidStr, ok := h[HeaderRequestID]
-	if !ok {
-		return uuid.Nil, false
-	}
-
-	id, err := uuid.Parse(uuidStr)
-	if err != nil {
-		return uuid.Nil, false
-	}
-
-	return id, true
-}
-
-func (h MessageHeaders) MustGetRequestID() uuid.UUID {
-	id, _ := h.GetRequestID()
-	return id
-}
-
-func (h MessageHeaders) SetRequestID(id uuid.UUID) {
-	h[HeaderRequestID] = id.String()
-}
-
-func (h MessageHeaders) SetRandomRequestID() {
-	h[HeaderRequestID] = uuid.NewString()
-}
 
 func (h MessageHeaders) GetPath() (path string, hasPath bool) {
 	path, hasPath = h[HeaderPath]
@@ -80,4 +54,51 @@ func (h MessageHeaders) SetError(err error) {
 	}
 
 	h[HeaderError] = value
+}
+
+func (h MessageHeaders) GetRequestID() (id uuid.UUID, hasID bool) {
+	uuidStr, ok := h[HeaderRequestID]
+	if !ok {
+		return uuid.Nil, false
+	}
+
+	id, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return uuid.Nil, false
+	}
+
+	return id, true
+}
+
+func (h MessageHeaders) MustGetRequestID() uuid.UUID {
+	id, _ := h.GetRequestID()
+	return id
+}
+
+func (h MessageHeaders) SetRequestID(id uuid.UUID) {
+	h[HeaderRequestID] = id.String()
+}
+
+func (h MessageHeaders) SetRandomRequestID() {
+	h[HeaderRequestID] = uuid.NewString()
+}
+
+func (h MessageHeaders) GetParentRequestID() (id uuid.UUID, hasID bool) {
+	uuidStr, ok := h[HeaderParentRequestID]
+	if !ok {
+		return uuid.Nil, false
+	}
+
+	id, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return uuid.Nil, false
+	}
+
+	return id, true
+}
+
+func (h MessageHeaders) SetParentRequestID(id uuid.UUID) {
+	if id != uuid.Nil {
+		h[HeaderParentRequestID] = id.String()
+	}
 }
