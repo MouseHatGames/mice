@@ -78,7 +78,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 
 	parentReq, hasParent := transport.GetContextRequest(callopts.Context)
 	if hasParent {
-		req.SetParentRequestID(parentReq.MustGetRequestID())
+		req.MessageHeaders[transport.HeaderParentRequestID] = parentReq.MessageHeaders[transport.HeaderRequestID]
 	}
 
 	// Encode request data
