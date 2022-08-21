@@ -8,14 +8,24 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type noopTracerProvider struct{}
+
+func NoopTracerProvider() trace.TracerProvider {
+	return noopTracerProvider{}
+}
+
+func (n noopTracerProvider) Tracer(instrumentationName string, opts ...trace.TracerOption) trace.Tracer {
+	return noopTracer{}
+}
+
 type noopTracer struct{}
 
 func NoopTracer() trace.Tracer {
-	return &noopTracer{}
+	return noopTracer{}
 }
 
 func (noopTracer) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-	return ctx, &noopSpan{}
+	return ctx, noopSpan{}
 }
 
 type noopSpan struct{}

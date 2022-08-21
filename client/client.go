@@ -66,10 +66,8 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 
 	ctx = tracing.ExtractFromMessage(ctx, parentReq)
 
-	ctx, span := c.tracer.Start(ctx, path)
+	ctx, span := c.tracer.Start(ctx, path, trace.WithAttributes(attribute.String("peer.service", service)))
 	defer span.End()
-
-	span.SetAttributes(attribute.String("peer.service", service))
 
 	if c.disc == nil {
 		panic("no discovery has been set up")
