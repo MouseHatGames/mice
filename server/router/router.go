@@ -7,10 +7,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/MouseHatGames/mice/codec"
 	"github.com/MouseHatGames/mice/logger"
+	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/tracing"
 	"github.com/MouseHatGames/mice/transport"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var ErrMalformedPath = errors.New("malformed request path")
@@ -23,15 +26,15 @@ type Router interface {
 
 type router struct {
 	handlers map[string]*handler
-	codec    codec.Codec
 	log      logger.Logger
+	opts     *options.Options
 }
 
-func NewRouter(cod codec.Codec, log logger.Logger) Router {
+func NewRouter(opts *options.Options) Router {
 	return &router{
 		handlers: make(map[string]*handler),
-		codec:    cod,
-		log:      log.GetLogger("router"),
+		log:      opts.Logger.GetLogger("router"),
+		opts:     opts,
 	}
 }
 
@@ -80,6 +83,12 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	ctx := transport.ContextWithRequest(context.Background(), req)
 	ctx = tracing.ExtractFromMessage(ctx, req)
 
+	ctx, span := s.opts.Tracer.Start(ctx, path, trace.WithAttributes(
+		attribute.String("peer.service", s.opts.Name),
+		attribute.Int("content_length", len(req.Data)),
+	))
+	defer span.End()
+
 	ret := method.HandlerFunc.Call([]reflect.Value{
 		reflect.ValueOf(handler.Instance),
 		reflect.ValueOf(ctx),
@@ -90,10 +99,13 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	if !ret[0].IsNil() {
 		err := ret[0].Interface().(error)
 
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "request handler failed")
+
 		return nil, err
 	}
 
-	outdata, err := s.codec.Marshal(respValue.Interface())
+	outdata, err := s.opts.Codec.Marshal(respValue.Interface())
 	if err != nil {
 		return nil, fmt.Errorf("encode response: %w", err)
 	}
@@ -105,7 +117,7 @@ func (s *router) decode(t reflect.Type, d []byte) (reflect.Value, error) {
 	val := reflect.New(t)
 	intf := val.Interface()
 
-	if err := s.codec.Unmarshal(d, intf); err != nil {
+	if err := s.opts.Codec.Unmarshal(d, intf); err != nil {
 		return reflect.Value{}, err
 	}
 

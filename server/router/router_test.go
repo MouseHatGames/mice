@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MouseHatGames/mice/options"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ func (c *mockCodec) Unmarshal(b []byte, out interface{}) error {
 func TestDecode(t *testing.T) {
 	c := &mockCodec{}
 	s := &router{
-		codec: c,
+		opts: &options.Options{Codec: c},
 	}
 
 	ret, err := s.decode(reflect.TypeOf(&dummy{}), []byte{})
