@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/MouseHatGames/mice/broker"
+	"github.com/MouseHatGames/mice/options"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +47,9 @@ func TestCreateCallback(t *testing.T) {
 	t.Run("normal", func(t *testing.T) {
 		cod := &mockcodec{n: 123}
 		c := &client{
-			codec: cod,
+			opts: &options.Options{
+				Codec: cod,
+			},
 		}
 
 		called := false

@@ -8,9 +8,6 @@ import (
 	"reflect"
 
 	"github.com/MouseHatGames/mice/broker"
-	"github.com/MouseHatGames/mice/codec"
-	"github.com/MouseHatGames/mice/discovery"
-	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/tracing"
 	"github.com/MouseHatGames/mice/transport"
@@ -29,24 +26,14 @@ type Client interface {
 }
 
 type client struct {
-	tracer trace.Tracer
-	codec  codec.Codec
-	trans  transport.Transport
-	broker broker.Broker
-	log    logger.Logger
-	disc   discovery.Discovery
-	port   int16
+	opts *options.Options
+	port int16
 }
 
 func NewClient(opts *options.Options) Client {
 	return &client{
-		codec:  opts.Codec,
-		trans:  opts.Transport,
-		broker: opts.Broker,
-		log:    opts.Logger,
-		disc:   opts.Discovery,
-		port:   opts.RPCPort,
-		tracer: opts.Tracer,
+		opts: opts,
+		port: opts.RPCPort,
 	}
 }
 
@@ -66,21 +53,21 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 
 	ctx = tracing.ExtractFromMessage(ctx, parentReq)
 
-	ctx, span := c.tracer.Start(ctx, path, trace.WithAttributes(attribute.String("peer.service", service)))
+	ctx, span := c.opts.Tracer.Start(ctx, path, trace.WithAttributes(attribute.String("peer.service", service)))
 	defer span.End()
 
-	if c.disc == nil {
+	if c.opts.Discovery == nil {
 		panic("no discovery has been set up")
 	}
 
 	// Find service address
-	host, err := c.disc.Find(service)
+	host, err := c.opts.Discovery.Find(service)
 	if err != nil {
 		return fmt.Errorf("discover service: %w", err)
 	}
 
 	// Connect to service
-	s, err := c.trans.Dial(ctx, fmt.Sprintf("%s:%d", host, c.port))
+	s, err := c.opts.Transport.Dial(ctx, fmt.Sprintf("%s:%d", host, c.port))
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}
@@ -97,7 +84,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	}
 
 	// Encode request data
-	req.Data, err = c.codec.Marshal(reqval)
+	req.Data, err = c.opts.Codec.Marshal(reqval)
 	if err != nil {
 		return fmt.Errorf("encode request: %w", err)
 	}
@@ -122,7 +109,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	}
 
 	// Decode response data
-	if err := c.codec.Unmarshal(respmsg.Data, respval); err != nil {
+	if err := c.opts.Codec.Unmarshal(respmsg.Data, respval); err != nil {
 		return fmt.Errorf("decode response: %w", err)
 	}
 
@@ -130,7 +117,7 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 }
 
 func (c *client) Subscribe(topic string, callback interface{}) {
-	if c.broker == nil {
+	if c.opts.Broker == nil {
 		panic("no broker has been declared")
 	}
 
@@ -139,8 +126,8 @@ func (c *client) Subscribe(topic string, callback interface{}) {
 		panic(err.Error())
 	}
 
-	if err := c.broker.Subscribe(context.Background(), topic, cb); err != nil {
-		c.log.Errorf("failed to subscribe to %s: %s", topic, err)
+	if err := c.opts.Broker.Subscribe(context.Background(), topic, cb); err != nil {
+		c.opts.Logger.Errorf("failed to subscribe to %s: %s", topic, err)
 	}
 }
 
@@ -174,9 +161,9 @@ func (c *client) createCallback(intf interface{}) (func(*broker.Message), error)
 	return func(msg *broker.Message) {
 		data := reflect.New(datatyp)
 
-		err := c.codec.Unmarshal(msg.Data, data.Interface())
+		err := c.opts.Codec.Unmarshal(msg.Data, data.Interface())
 		if err != nil {
-			c.log.Errorf("failed to unmarshal event data: %s", err)
+			c.opts.Logger.Errorf("failed to unmarshal event data: %s", err)
 			return
 		}
 
