@@ -84,7 +84,7 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	ctx = tracing.ExtractFromMessage(ctx, req)
 
 	ctx, span := s.opts.Tracer.Start(ctx, path, trace.WithAttributes(
-		attribute.Int("content_length", len(req.Data)),
+		attribute.Int("request_length", len(req.Data)),
 	))
 	defer span.End()
 
@@ -108,6 +108,8 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("encode response: %w", err)
 	}
+
+	span.SetAttributes(attribute.Int("response_length", len(outdata)))
 
 	return outdata, nil
 }
