@@ -10,7 +10,6 @@ import (
 	"github.com/MouseHatGames/mice/config"
 	"github.com/MouseHatGames/mice/logger/stdout"
 	"github.com/MouseHatGames/mice/options"
-	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/server"
 	"github.com/MouseHatGames/mice/tracing"
 )
@@ -60,7 +59,6 @@ func NewService(opts ...options.Option) Service {
 		panic("no transport defined")
 	}
 
-	svc.options.Router = router.NewRouter(svc.options.Codec, svc.options.Logger)
 	svc.server = server.NewServer(&svc.options)
 	svc.client = client.NewClient(&svc.options)
 

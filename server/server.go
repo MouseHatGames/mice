@@ -9,6 +9,7 @@ import (
 	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
+	"github.com/MouseHatGames/mice/server/router"
 	"github.com/MouseHatGames/mice/transport"
 )
 
@@ -19,14 +20,16 @@ type Server interface {
 }
 
 type server struct {
-	opts *options.Options
-	log  logger.Logger
+	opts   *options.Options
+	log    logger.Logger
+	router router.Router
 }
 
 func NewServer(opts *options.Options) Server {
 	return &server{
-		opts: opts,
-		log:  opts.Logger.GetLogger("server"),
+		opts:   opts,
+		log:    opts.Logger.GetLogger("server"),
+		router: router.NewRouter(opts),
 	}
 }
 
@@ -46,7 +49,7 @@ func (s *server) Start() error {
 }
 
 func (s *server) AddHandler(h interface{}, name string, methods ...string) {
-	s.opts.Router.AddHandler(h, name, methods)
+	s.router.AddHandler(h, name, methods)
 }
 
 func (s *server) handle(soc transport.Socket) {
@@ -82,7 +85,7 @@ func (s *server) handleRequest(req *transport.Message, soc transport.Socket) {
 	var resp transport.Message
 	resp.SetRequestID(req.MustGetRequestID())
 
-	ret, err := s.opts.Router.Handle(path, req)
+	ret, err := s.router.Handle(path, req)
 
 	if err != nil {
 		resp.SetError(err)

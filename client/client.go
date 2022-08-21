@@ -11,9 +11,6 @@ import (
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/tracing"
 	"github.com/MouseHatGames/mice/transport"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var ErrMustBeFunc = errors.New("value must be a function")
@@ -52,9 +49,6 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	}
 
 	ctx = tracing.ExtractFromMessage(ctx, parentReq)
-
-	ctx, span := c.opts.Tracer.Start(ctx, path, trace.WithAttributes(attribute.String("peer.service", service)))
-	defer span.End()
 
 	if c.opts.Discovery == nil {
 		panic("no discovery has been set up")
@@ -102,9 +96,6 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 
 	// Check for server handler error
 	if err, ok := respmsg.GetError(); ok {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "handler failed")
-
 		return err
 	}
 

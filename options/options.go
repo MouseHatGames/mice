@@ -6,7 +6,6 @@ import (
 	"github.com/MouseHatGames/mice/config"
 	"github.com/MouseHatGames/mice/discovery"
 	"github.com/MouseHatGames/mice/logger"
-	"github.com/MouseHatGames/mice/router"
 	"github.com/MouseHatGames/mice/transport"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -20,7 +19,6 @@ type Options struct {
 	Logger    logger.Logger
 	Codec     codec.Codec
 	Transport transport.Transport
-	Router    router.Router
 	Broker    broker.Broker
 	Config    config.Config
 	Discovery discovery.Discovery
