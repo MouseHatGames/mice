@@ -84,7 +84,6 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	ctx = tracing.ExtractFromMessage(ctx, req)
 
 	ctx, span := s.opts.Tracer.Start(ctx, path, trace.WithAttributes(
-		attribute.String("peer.service", s.opts.Name),
 		attribute.Int("content_length", len(req.Data)),
 	))
 	defer span.End()
