@@ -118,7 +118,7 @@ func (h *MessageHeaders) SetUserID(id uint32) {
 }
 
 func (h MessageHeaders) GetUserID() (id uint32, hasID bool) {
-	idStr, ok := h[HeaderRequestID]
+	idStr, ok := h[HeaderUserID]
 	if !ok {
 		return 0, false
 	}
