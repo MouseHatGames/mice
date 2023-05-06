@@ -2,6 +2,7 @@ package transport
 
 import (
 	goerrors "errors"
+	"strconv"
 
 	"github.com/MouseHatGames/mice/errors"
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ const (
 	HeaderError           = "error"
 	HeaderRequestID       = "reqid"
 	HeaderParentRequestID = "parentreq"
+	HeaderUserID          = "userid"
 )
 
 type MessageHeaders map[string]string
@@ -109,4 +111,22 @@ func (h *MessageHeaders) SetParentRequestID(id uuid.UUID) {
 	if id != uuid.Nil {
 		h.ensure()[HeaderParentRequestID] = id.String()
 	}
+}
+
+func (h *MessageHeaders) SetUserID(id uint32) {
+	h.ensure()[HeaderUserID] = strconv.FormatUint(uint64(id), 10)
+}
+
+func (h MessageHeaders) GetUserID() (id uint32, hasID bool) {
+	idStr, ok := h[HeaderRequestID]
+	if !ok {
+		return 0, false
+	}
+
+	id64, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		return 0, false
+	}
+
+	return uint32(id64), true
 }

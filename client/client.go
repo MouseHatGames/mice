@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/MouseHatGames/mice/auth"
 	"github.com/MouseHatGames/mice/broker"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/tracing"
@@ -70,6 +71,10 @@ func (c *client) Call(service string, path string, reqval interface{}, respval i
 	req := transport.NewMessage()
 	req.SetRandomRequestID()
 	req.SetPath(path)
+
+	if id, ok := auth.GetUserID(ctx); ok {
+		req.SetUserID(id)
+	}
 
 	tracing.InjectToMessage(ctx, req)
 

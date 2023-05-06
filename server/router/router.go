@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/MouseHatGames/mice/auth"
 	"github.com/MouseHatGames/mice/logger"
 	"github.com/MouseHatGames/mice/options"
 	"github.com/MouseHatGames/mice/tracing"
@@ -83,8 +84,13 @@ func (s *router) Handle(path string, req *transport.Message) ([]byte, error) {
 	ctx := transport.ContextWithRequest(context.Background(), req)
 	ctx = tracing.ExtractFromMessage(ctx, req)
 
+	if id, ok := req.GetUserID(); ok {
+		ctx = auth.WithUserID(ctx, id)
+	}
+
 	ctx, span := s.opts.Tracer.Start(ctx, path, trace.WithAttributes(
 		attribute.Int("request_length", len(req.Data)),
+		attribute.Bool("authed", auth.IsAuthed(ctx)),
 	))
 	defer span.End()
 
